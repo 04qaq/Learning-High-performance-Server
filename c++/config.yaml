@@ -1,4 +1,0 @@
-server:
-  port: 9090
-  name: "prod-server"
-  ports: [8080, 8443, 9000]
