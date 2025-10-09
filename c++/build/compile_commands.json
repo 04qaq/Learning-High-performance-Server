@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/sunshine/c++/build",
+  "command": "/usr/bin/g++ -I/home/sunshine/c++/include -g -fPIC -std=c++17 -o src/CMakeFiles/core.dir/log.cpp.o -c /home/sunshine/c++/src/log.cpp",
+  "file": "/home/sunshine/c++/src/log.cpp"
+},
+{
+  "directory": "/home/sunshine/c++/build",
+  "command": "/usr/bin/g++ -I/home/sunshine/c++/include -g -fPIC -std=c++17 -o src/CMakeFiles/core.dir/Config.cpp.o -c /home/sunshine/c++/src/Config.cpp",
+  "file": "/home/sunshine/c++/src/Config.cpp"
+},
+{
+  "directory": "/home/sunshine/c++/build",
+  "command": "/usr/bin/g++ -I/home/sunshine/c++/include -g -fPIC -std=c++17 -o src/CMakeFiles/core.dir/fiber.cpp.o -c /home/sunshine/c++/src/fiber.cpp",
+  "file": "/home/sunshine/c++/src/fiber.cpp"
+},
+{
+  "directory": "/home/sunshine/c++/build",
+  "command": "/usr/bin/g++ -I/home/sunshine/c++/include -g -fPIE -std=c++17 -o src/CMakeFiles/app.dir/main.cpp.o -c /home/sunshine/c++/src/main.cpp",
+  "file": "/home/sunshine/c++/src/main.cpp"
+}
+]

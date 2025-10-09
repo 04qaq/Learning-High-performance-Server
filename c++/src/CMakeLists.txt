@@ -6,6 +6,7 @@ set(CORE_SOURCES
     log.cpp
     Config.cpp
     #thread.cpp
+    fiber.cpp
 )
 
 add_library(core ${CORE_SOURCES})
