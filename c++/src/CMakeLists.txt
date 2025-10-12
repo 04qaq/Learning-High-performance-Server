@@ -7,6 +7,8 @@ set(CORE_SOURCES
     Config.cpp
     #thread.cpp
     fiber.cpp
+    scheduler.cpp
+    iomanager.cpp
 )
 
 add_library(core ${CORE_SOURCES})

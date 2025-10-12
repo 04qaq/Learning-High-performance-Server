@@ -12,7 +12,7 @@ namespace sunshine {
 
 class Fiber : public std::enable_shared_from_this<Fiber> {
 public:
-    std::shared_ptr<Fiber> ptr;
+    typedef std::shared_ptr<Fiber> ptr;
     enum State {
         INIT, // 准备状态（还没运行过）
         HOLD, // 挂起（协程主动让出）

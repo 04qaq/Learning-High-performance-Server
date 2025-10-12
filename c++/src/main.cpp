@@ -1,76 +1,61 @@
-// main.cpp - 测试 sunshine::Thread
-#include "libs/log.h"
-#include "libs/fiber.h"
-#include <iostream>
-#include <vector>
-#include <memory>
-#include <string>
-#include <chrono>
-#include <thread>        // 用于主线程 sleep
-#include <libs/thread.h> // 请根据你项目的实际路径调整
-static std::string stateName(sunshine::Fiber::State s) {
-    switch (s) {
-    case sunshine::Fiber::INIT: return "INIT";
-    case sunshine::Fiber::HOLD: return "HOLD";
-    case sunshine::Fiber::EXEC: return "EXEC";
-    case sunshine::Fiber::TERM: return "TERM";
-    case sunshine::Fiber::READY: return "READY";
-    default: return "UNKNOWN";
-    }
-}
+// POSIX / socket 系统调用
+#include <sys/types.h>  // 基本系统类型（有些系统需要）
+#include <sys/socket.h> // socket(), bind(), listen(), accept4(), recv(), send()
+#include <netinet/in.h> // sockaddr_in
+#include <arpa/inet.h>  // htons(), inet_addr(), inet_pton()
+#include <unistd.h>     // close(), read(), write()
+#include <fcntl.h>      // fcntl(), O_NONBLOCK
+#include <errno.h>      // errno
+#include <string.h>     // strerror, memset
+#include <signal.h>     // signal(), SIGPIPE（可选：忽略 SIGPIPE）
+
+// C++ 标准库
+#include <iostream>   // std::cout / std::cerr
+#include <memory>     // std::shared_ptr, std::make_shared
+#include <functional> // std::function, lambda
+#include <string>     // std::string
+#include <cassert>    // assert
+
+// 你的工程头（必须）
+#include "libs/iomanager.h" // IOManager（包含 Scheduler）
+#include "libs/scheduler.h" // 若需要显式使用 Scheduler API
+#include "libs/log.h"       // 日志（可选）
+
+using namespace sunshine;
 
 int main() {
-    using sunshine::Fiber;
-    std::cout << "TotalFibers before creation: " << Fiber::TotalFibers() << "\n";
+    IOManager::ptr iom = std::make_shared<IOManager>(4, true, "ioman");
+    iom->start(); // 启动线程，若希望 caller 也参与，请在 caller 线程调用 iom->run() 或在 constructor 用 use_caller=true 并在 caller 调用 run()
 
-    // 创建一个协程，内部会先 YieldToReady，然后 YieldToHold，最后结束
-    auto f = std::make_shared<Fiber>([]() {
-        std::cout << "[fiber] started\n";
-
-        std::cout << "[fiber] -> YieldToReady()\n";
-        // 期望：把自己标记为 READY，然后切出到主协程（调度者）
-        Fiber::YieldToReady();
-
-        std::cout << "[fiber] resumed after YieldToReady\n";
-
-        std::cout << "[fiber] -> YieldToHold()\n";
-        // 期望：把自己标记为 HOLD，然后切出到主协程（调度者）
-        Fiber::YieldToHold();
-
-        std::cout << "[fiber] resumed after YieldToHold, finishing\n";
-        // 返回则会把状态设为 TERM 并切回主协程
+    int listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    // bind/listen 并 setNonBlock(listenfd)...
+    // 注册 accept 的可读事件
+    iom->addEvent(listenfd, IOManager::READ, [listenfd, iom]() {
+        // ET 模式：循环 accept 直到 EAGAIN
+        while (true) {
+            std::cout << 1 << std::endl;
+            int c = accept4(listenfd, nullptr, nullptr, SOCK_NONBLOCK);
+            if (c < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) break;
+                break;
+            }
+            // 注册 client 可读回调（尽量把实际处理放在协程中）
+            iom->addEvent(c, IOManager::READ, [c, iom]() {
+                char buf[4096];
+                ssize_t n = recv(c, buf, sizeof(buf), 0);
+                if (n > 0) {
+                    // 处理数据
+                } else if (n == 0) {
+                    // 客户端关闭
+                    iom->cancelAll(c);
+                    close(c);
+                } else if (errno == EAGAIN) {
+                    // 数据读尽, 等待下次
+                } else {
+                    iom->cancelAll(c);
+                    close(c);
+                }
+            });
+        }
     });
-
-    std::cout << "Fiber created. state = " << stateName(f->getState()) << " (expect INIT)\n";
-
-    // 第一次 swapIn：进入协程，执行到 YieldToReady() 并切回这里
-    std::cout << "main -> swapIn() #1\n";
-    f->swapIn();
-    std::cout << "main <- returned from swapIn #1, state = " << stateName(f->getState()) << " (expect READY)\n";
-    if (f->getState() == Fiber::READY)
-        std::cout << "[TEST] READY OK\n";
-    else
-        std::cout << "[TEST] READY FAIL\n";
-
-    // 第二次 swapIn：继续运行协程到 YieldToHold() 并切回
-    std::cout << "main -> swapIn() #2\n";
-    f->swapIn();
-    std::cout << "main <- returned from swapIn #2, state = " << stateName(f->getState()) << " (expect HOLD)\n";
-    if (f->getState() == Fiber::HOLD)
-        std::cout << "[TEST] HOLD OK\n";
-    else
-        std::cout << "[TEST] HOLD FAIL\n";
-
-    // 第三次 swapIn：继续运行直到协程结束（TERM）
-    std::cout << "main -> swapIn() #3\n";
-    f->swapIn();
-    std::cout << "main <- returned from swapIn #3, state = " << stateName(f->getState()) << " (expect TERM)\n";
-    if (f->getState() == Fiber::TERM)
-        std::cout << "[TEST] TERM OK\n";
-    else
-        std::cout << "[TEST] TERM FAIL\n";
-
-    std::cout << "TotalFibers after: " << Fiber::TotalFibers() << "\n";
-
-    return 0;
 }
