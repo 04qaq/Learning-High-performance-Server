@@ -1,5 +1,6 @@
 // file: libs/iomanager.cpp
 #include "libs/iomanager.h"
+#include <memory>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <string.h>
@@ -58,6 +59,10 @@ IOManager::~IOManager() {
     stop(); // 先停止调度器
     if (m_epfd != -1) close(m_epfd);
     if (m_eventfd != -1) close(m_eventfd);
+}
+
+IOManager *IOManager::GetThis() {
+    return dynamic_cast<IOManager *>(Scheduler::GetThis());
 }
 
 // 扩容 fd 上下文容器（确保能索引到指定 fd）

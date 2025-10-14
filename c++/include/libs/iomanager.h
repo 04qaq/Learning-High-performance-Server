@@ -35,6 +35,7 @@ public:
     // use_caller: 是否将调用线程作为主协程（true时主协程在调用线程运行）
     // name: 调度器名称（用于日志标识）
     IOManager(size_t threads = 1, bool use_caller = true, const std::string &name = "");
+    static IOManager *GetThis();
 
     // 析构函数（清理 epoll 资源）
     ~IOManager();

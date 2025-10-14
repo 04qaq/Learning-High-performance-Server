@@ -9,6 +9,7 @@ set(CORE_SOURCES
     fiber.cpp
     scheduler.cpp
     iomanager.cpp
+    socket.cpp
 )
 
 add_library(core ${CORE_SOURCES})
