@@ -6,7 +6,7 @@ option(BUILD_SHARED_LIBS "Build libraries as shared" OFF)
 option(BUILD_TESTING "Enable building tests" ON)
 
 # 使用现代 CMake：在 target 层面设置标准
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
